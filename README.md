@@ -1,2 +1,3 @@
 # intelligent-agents
-Python 3.6+ library for universal adaptive intelligent agents based on Deep-Q Neural Networks
+Python 3.6+ library for adaptive intelligent agents in real-time environments (e.g. games) based on a combination of
+rule-based policies and Deep Q Neural Networks.
