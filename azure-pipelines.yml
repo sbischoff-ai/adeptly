@@ -32,7 +32,7 @@ steps:
   displayName: 'Check types'
 
 - script: |
-    poetry run pylint-fail-under --fail_under 9.9 adeptly
+    poetry run pylint-fail-under --fail_under 9.99 adeptly
   displayName: 'Lint'
 
 - script: |
