@@ -1,4 +1,4 @@
-"""Simple adaptive agents with finite, countable action spaces"""
+"""Simple adaptive agents with finite, countable action spaces."""
 
 import random
 from collections import deque
