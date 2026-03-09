@@ -41,3 +41,38 @@ with AdeptlyEngine():
 ```
 
 The above example is trivial, of course, as the environment an the agent are actually decoupled, but it suffices to illustrate the basic usage of the DQN interface.
+
+## Development
+
+This project now uses [`uv`](https://docs.astral.sh/uv/) for dependency management and reproducible environments.
+
+### Setup
+```bash
+uv python install 3.12
+uv venv --python 3.12
+```
+
+### Lock dependencies
+```bash
+uv lock
+```
+
+### Sync environment from lockfile
+```bash
+uv sync --frozen --extra dev
+```
+
+### Run checks
+```bash
+uv run make lint
+uv run make typecheck
+uv run make test
+```
+
+You can also run the underlying commands directly:
+
+```bash
+uv run black --check adeptly tests
+uv run mypy adeptly
+uv run pytest
+```
