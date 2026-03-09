@@ -1,11 +1,9 @@
-[![Build Status](https://dev.azure.com/pxlbrain/adeptly/_apis/build/status/sbischoff-ai.adeptly?branchName=master)](https://dev.azure.com/pxlbrain/adeptly/_build/latest?definitionId=3&branchName=master)
-![Azure DevOps tests (branch)](https://img.shields.io/azure-devops/tests/pxlbrain/adeptly/3/master.svg)
-![Azure DevOps coverage (branch)](https://img.shields.io/azure-devops/coverage/pxlbrain/adeptly/3/master.svg)
+[![CI](https://github.com/sbischoff-ai/adeptly/actions/workflows/ci.yml/badge.svg)](https://github.com/sbischoff-ai/adeptly/actions/workflows/ci.yml)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 ![PyPI](https://img.shields.io/pypi/v/adeptly.svg)
 
 # Adeptly
-Python 3.6+ library for adaptive intelligent agents in real-time environments (e.g. games) based on a combination of
+Python 3.12+ library for adaptive intelligent agents in real-time environments (e.g. games) based on a combination of
 rule-based policies and Deep Q Neural Networks.
 
 ## Current State
@@ -68,6 +66,8 @@ uv run make lint
 uv run make typecheck
 uv run make test
 ```
+
+GitHub Actions CI runs this same command set on Python 3.12 and 3.13.
 
 You can also run the underlying commands directly:
 
