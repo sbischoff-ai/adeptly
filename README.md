@@ -12,33 +12,27 @@ In the next step this will then be integrated with decision and behaviour trees 
 
 ## Usage
 ```python
-from adeptly import AdeptlyEngine, DQNAgent
+import numpy as np
+from adeptly.agents.dqn import DQNAgent
 
-actions = ['Foo', 'Bar']
+actions = ["Foo", "Bar"]
+agent = DQNAgent(observation_size=1, action_size=2)
 
-bob = DQNAgent(1, 2, [0.5, 0.5])
-
-with AdeptlyEngine():
-    observation = None
-    action_index = None
-    reward = None
-    for i in range(1000):
-        next_observation = i % 10
-        if i > 0:
-            bob.remember(observation, action_index, reward, next_observation, True if i == 999 else False)
-        observation = next_observation
-        action_index = bob.predict_best_action(observation)
-        # Train Bob to always Foo, expect if 9 or 10 is observed, then Bar is better.
-        reward = 0 if actions[index] == 'Foo' else 1
-        if observation > 8 and actions[index] == 'Foo':
-            reward = -1
-        # Let Bob learn from the past at every 100 steps.
-        if i % 100 == 0 and i != 0:
-            bob.replay(100)
-
+observation = np.array([0.0], dtype=np.float32)
+for step in range(1_000):
+    action_index = agent.predict_best_action(observation)
+    next_observation = np.array([float(step % 10)], dtype=np.float32)
+    reward = 1.0 if actions[action_index] == "Bar" and next_observation[0] > 8 else 0.0
+    done = step == 999
+    agent.remember(observation, action_index, reward, next_observation, done)
+    loss = agent.replay()
+    observation = next_observation
 ```
 
-The above example is trivial, of course, as the environment an the agent are actually decoupled, but it suffices to illustrate the basic usage of the DQN interface.
+### Migration notes
+- `adeptly.dqn.DQNAgent` is deprecated; use `adeptly.agents.dqn.DQNAgent`.
+- `AdeptlyEngine` is deprecated and now a no-op context manager.
+- The TensorFlow/Keras implementation has been replaced by a PyTorch 2.x DQN agent with replay buffer, target network updates, epsilon scheduling, and Double DQN support.
 
 ## Development
 
