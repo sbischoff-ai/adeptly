@@ -3,40 +3,53 @@
 ![PyPI](https://img.shields.io/pypi/v/adeptly.svg)
 
 # Adeptly
-Python 3.12+ library for adaptive intelligent agents in real-time environments (e.g. games) based on a combination of
-rule-based policies and Deep Q Neural Networks.
 
-## Current State
-Right now this is little more than a basic DQN implementation. The vision is for this to become a library dedicated to reinforcement learning agents that can learn as the act in an environment (which is my definition of *adaptive* here).
-In the next step this will then be integrated with decision and behaviour trees as well as finite state machines in way that q-learning agents become nodes in a behaviour or decision tree.
+Adeptly is a Python 3.12+ library for building adaptive agents in real-time environments. The current core is a PyTorch DQN stack, with trainer and low-latency runtime utilities designed for interactive loops (games, simulations, online control).
 
-## Usage
+## Current capabilities
+
+- **PyTorch 2.x DQN agent** with:
+  - replay buffer
+  - target networks (hard or soft updates)
+  - epsilon scheduling
+  - optional Double DQN target computation
+- **Trainer orchestration** (`DQNTrainer`) for:
+  - warmup/update cadence controls
+  - checkpointing
+  - evaluation episodes
+- **Real-time actor/learner split** (`RealTimeInferenceLoop`) for latency-sensitive action selection with deferred learning.
+- **Multimodal observation stack** for batched image + telemetry + optional event/text inputs via `ObservationBatch` and `MultimodalQNetwork`.
+- **Compatibility shims** for legacy imports (`adeptly.dqn.DQNAgent`) and `AdeptlyEngine` while migration is in progress.
+
+## Architecture documentation
+
+- [Architecture overview](ARCHITECTURE.md): agent components, end-to-end data flow, training loop orchestration, and multimodal pipeline.
+- [Migration guide](MIGRATION.md): step-by-step migration from legacy `DQNAgent` usage to the current API.
+
+## Migration away from TensorFlow 1.x
+
+Adeptly has moved to a PyTorch-first implementation and no longer relies on TensorFlow graph/session semantics.
+
+- `AdeptlyEngine` is deprecated and now a no-op context manager.
+- `adeptly.dqn.DQNAgent` is deprecated; import from `adeptly.agents.dqn` instead.
+- Training/inference loops should use `DQNTrainer` and `RealTimeInferenceLoop` for modern usage patterns.
+
+See [MIGRATION.md](MIGRATION.md) for concrete before/after examples.
+
+## Quick usage
+
+### Agent + trainer
+
 ```python
-import numpy as np
-from adeptly.agents.dqn import DQNAgent
+from adeptly import CounterEnv, DQNTrainer, TrainerConfig
+from adeptly.agents.dqn import DQNAgent, DQNConfig
 
-actions = ["Foo", "Bar"]
-agent = DQNAgent(observation_size=1, action_size=2)
+agent = DQNAgent(
+    observation_size=1,
+    action_size=2,
+    config=DQNConfig(min_replay_size=32, batch_size=32),
+)
 
-observation = np.array([0.0], dtype=np.float32)
-for step in range(1_000):
-    action_index = agent.predict_best_action(observation)
-    next_observation = np.array([float(step % 10)], dtype=np.float32)
-    reward = 1.0 if actions[action_index] == "Bar" and next_observation[0] > 8 else 0.0
-    done = step == 999
-    agent.remember(observation, action_index, reward, next_observation, done)
-    loss = agent.replay()
-    observation = next_observation
-```
-
-
-
-### Environment protocol and trainer
-```python
-from adeptly import CounterEnv, DQNAgent, DQNTrainer, TrainerConfig
-from adeptly.agents.dqn import DQNConfig
-
-agent = DQNAgent(observation_size=1, action_size=2, config=DQNConfig(min_replay_size=32, batch_size=32))
 trainer = DQNTrainer(
     agent=agent,
     env_factory=lambda: CounterEnv(target=5, max_steps=16),
@@ -49,99 +62,94 @@ trainer = DQNTrainer(
         evaluation_episodes=5,
     ),
 )
+
 metrics = trainer.train()
 print(metrics)
 ```
 
 ### Real-time inference loop (actor/learner split)
+
 ```python
 import numpy as np
 from adeptly import RealTimeInferenceLoop
 
 loop = RealTimeInferenceLoop(agent)
 obs = np.array([0.0], dtype=np.float32)
-action = loop.actor_step(obs)  # low-latency action selection path
+action = loop.actor_step(obs)
 
-# Later/on another thread: enqueue transitions and update learner independently.
-loop.submit_transition(obs, action, reward=0.2, next_observation=np.array([1.0], dtype=np.float32), done=False)
+loop.submit_transition(
+    obs,
+    action,
+    reward=0.2,
+    next_observation=np.array([1.0], dtype=np.float32),
+    done=False,
+)
 loop.learner_update(max_updates=1)
 ```
 
-### Migration notes
-- `adeptly.dqn.DQNAgent` is deprecated; use `adeptly.agents.dqn.DQNAgent`.
-- `AdeptlyEngine` is deprecated and now a no-op context manager.
-- The TensorFlow/Keras implementation has been replaced by a PyTorch 2.x DQN agent with replay buffer, target network updates, epsilon scheduling, and Double DQN support.
+### Multimodal DQN inference (batched)
+
+```python
+import torch
+from adeptly.observations import MultimodalQNetwork, ObservationBatch
+
+model = MultimodalQNetwork(
+    image_channels=3,
+    telemetry_dim=6,
+    action_size=4,
+    sequence_vocab_size=256,
+)
+
+observations = ObservationBatch(
+    image_frames=torch.randint(0, 256, (8, 3, 84, 84), dtype=torch.uint8),
+    scalar_telemetry=torch.randn(8, 6),
+    events_or_text=torch.randint(0, 256, (8, 12), dtype=torch.int64),
+)
+
+q_values = model(observations)
+actions = torch.argmax(q_values, dim=1)
+```
+
+## Roadmap
+
+Near-term priorities:
+
+1. Expand trainer ergonomics (resume flows, richer metrics export, and callback hooks).
+2. Add end-to-end examples for real-time actor/learner deployment patterns.
+3. Extend multimodal training utilities beyond inference-only examples.
+4. Continue reducing legacy surface area and remove deprecated shims in a future major release.
+5. Improve benchmarking coverage across synthetic and game-like environments.
 
 ## Development
 
-This project now uses [`uv`](https://docs.astral.sh/uv/) for dependency management and reproducible environments.
+This repository uses [`uv`](https://docs.astral.sh/uv/) for deterministic local workflows.
 
 ### Setup
+
 ```bash
 uv python install 3.12
 uv venv --python 3.12
-```
-
-### Lock dependencies
-```bash
-uv lock
-```
-
-### Sync environment from lockfile
-```bash
 uv sync --frozen --extra dev
 ```
 
-### Run checks
+### Canonical checks
+
 ```bash
 uv run make format
 uv run make lint
 uv run make typecheck
 uv run make test
 uv run make docs
-```
-
-### Pre-commit hooks
-```bash
-uv run pre-commit install
 uv run pre-commit run --all-files
 ```
 
-See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch naming, commit conventions, test expectations, and PR checklist details.
+### Rebuild generated documentation site
 
-GitHub Actions CI runs these direct commands on Python 3.12 and 3.13: black, mypy (on `adeptly` and `tests`), and `pytest -q`.
-
-You can also run the underlying commands directly:
+The `/docs` directory is generated output and is not rebuilt automatically during normal edits.
+To rebuild it locally, run:
 
 ```bash
-uv run black --check adeptly tests
-uv run mypy adeptly tests
-uv run pytest -q
+uv run make docs
 ```
 
-
-### Multimodal DQN inference (batched)
-```python
-import torch
-from adeptly.observations import MultimodalQNetwork, ObservationBatch
-
-batch_size = 8
-num_actions = 4
-model = MultimodalQNetwork(
-    image_channels=3,
-    telemetry_dim=6,
-    action_size=num_actions,
-    sequence_vocab_size=256,
-)
-
-# Minimal batched environment loop for inference-only usage.
-for _ in range(5):
-    observations = ObservationBatch(
-        image_frames=torch.randint(0, 256, (batch_size, 3, 84, 84), dtype=torch.uint8),
-        scalar_telemetry=torch.randn(batch_size, 6),
-        events_or_text=torch.randint(0, 256, (batch_size, 12), dtype=torch.int64),
-    )
-    q_values = model(observations)
-    actions = torch.argmax(q_values, dim=1)
-    # send `actions` back to your vectorized environment
-```
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for contributor workflow and PR checklist details.
