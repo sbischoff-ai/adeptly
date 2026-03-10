@@ -99,14 +99,14 @@ uv run make typecheck
 uv run make test
 ```
 
-GitHub Actions CI runs this same command set on Python 3.12 and 3.13.
+GitHub Actions CI runs these direct commands on Python 3.12 and 3.13: black, mypy (on `adeptly` and `tests`), and `pytest -q`.
 
 You can also run the underlying commands directly:
 
 ```bash
 uv run black --check adeptly tests
-uv run mypy adeptly
-uv run pytest
+uv run mypy adeptly tests
+uv run pytest -q
 ```
 
 
