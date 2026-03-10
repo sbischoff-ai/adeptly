@@ -29,6 +29,44 @@ for step in range(1_000):
     observation = next_observation
 ```
 
+
+
+### Environment protocol and trainer
+```python
+from adeptly import CounterEnv, DQNAgent, DQNTrainer, TrainerConfig
+from adeptly.agents.dqn import DQNConfig
+
+agent = DQNAgent(observation_size=1, action_size=2, config=DQNConfig(min_replay_size=32, batch_size=32))
+trainer = DQNTrainer(
+    agent=agent,
+    env_factory=lambda: CounterEnv(target=5, max_steps=16),
+    config=TrainerConfig(
+        total_steps=2_000,
+        update_frequency=2,
+        replay_warmup_steps=64,
+        target_update_cadence=100,
+        checkpoint_interval=500,
+        evaluation_episodes=5,
+    ),
+)
+metrics = trainer.train()
+print(metrics)
+```
+
+### Real-time inference loop (actor/learner split)
+```python
+import numpy as np
+from adeptly import RealTimeInferenceLoop
+
+loop = RealTimeInferenceLoop(agent)
+obs = np.array([0.0], dtype=np.float32)
+action = loop.actor_step(obs)  # low-latency action selection path
+
+# Later/on another thread: enqueue transitions and update learner independently.
+loop.submit_transition(obs, action, reward=0.2, next_observation=np.array([1.0], dtype=np.float32), done=False)
+loop.learner_update(max_updates=1)
+```
+
 ### Migration notes
 - `adeptly.dqn.DQNAgent` is deprecated; use `adeptly.agents.dqn.DQNAgent`.
 - `AdeptlyEngine` is deprecated and now a no-op context manager.
