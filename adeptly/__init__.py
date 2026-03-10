@@ -6,6 +6,9 @@ import warnings
 from contextlib import nullcontext
 
 from adeptly.agents.dqn import DQNAgent
+from adeptly.envs import EnvironmentProtocol, StepResult
+from adeptly.synthetic_env import CounterEnv
+from adeptly.trainer import DQNTrainer, RealTimeInferenceLoop, TrainerConfig
 
 
 class AdeptlyEngine:
@@ -21,4 +24,13 @@ class AdeptlyEngine:
         return nullcontext()
 
 
-__all__ = ["AdeptlyEngine", "DQNAgent"]
+__all__ = [
+    "AdeptlyEngine",
+    "CounterEnv",
+    "DQNAgent",
+    "DQNTrainer",
+    "EnvironmentProtocol",
+    "RealTimeInferenceLoop",
+    "StepResult",
+    "TrainerConfig",
+]
