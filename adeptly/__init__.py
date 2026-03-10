@@ -1,24 +1,24 @@
 """Spawn adaptive agents in real-time environments."""
 
-import tensorflow
+from __future__ import annotations
 
-from adeptly.dqn import DQNAgent
+import warnings
+from contextlib import nullcontext
+
+from adeptly.agents.dqn import DQNAgent
 
 
 class AdeptlyEngine:
-    """Handle Tensorflow standard graph reference.
-
-    Usage:
-    ```python
-    from adeptly import AdeptlyEngine
-
-    with AdeptlyEngine():
-        # Do stuff with adeptly agents.
-    ```
-
-    """
-
-    graph = tensorflow.get_default_graph()
+    """Deprecated no-op context manager kept for backward compatibility."""
 
     def __new__(cls):
-        return cls.graph.as_default()
+        warnings.warn(
+            "AdeptlyEngine is deprecated and now acts as a no-op context manager. "
+            "PyTorch-based agents no longer require TensorFlow graph scopes.",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return nullcontext()
+
+
+__all__ = ["AdeptlyEngine", "DQNAgent"]
