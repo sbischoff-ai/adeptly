@@ -33,7 +33,7 @@ class DQNTrainer:
     def __init__(
         self,
         agent: DQNAgent,
-        env_factory: Callable[[], EnvironmentProtocol[np.ndarray, int, dict[str, Any]]],
+        env_factory: Callable[[], EnvironmentProtocol],
         config: TrainerConfig,
     ) -> None:
         self.agent = agent
@@ -44,15 +44,13 @@ class DQNTrainer:
     def train(self) -> dict[str, float]:
         env = self.env_factory()
         observation, _ = env.reset()
-        episode_reward = 0.0
         episodes = 0
 
         for step in range(1, self.config.total_steps + 1):
             action = self.agent.predict_best_action(observation)
-            next_observation, reward, terminated, truncated, info = env.step(action)
+            next_observation, reward, terminated, truncated, _ = env.step(action)
             done = terminated or truncated
             self.agent.remember(observation, action, reward, next_observation, done)
-            episode_reward += reward
             observation = next_observation
 
             if step >= self.config.replay_warmup_steps and step % self.config.update_frequency == 0:
@@ -64,7 +62,6 @@ class DQNTrainer:
             if done:
                 episodes += 1
                 observation, _ = env.reset()
-                episode_reward = 0.0
 
         metrics = {"episodes": float(episodes), "evaluation_reward": self.evaluate()}
         return metrics
