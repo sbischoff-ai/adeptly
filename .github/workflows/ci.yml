@@ -29,11 +29,11 @@ jobs:
       - name: Sync dependencies
         run: uv sync --frozen --extra dev
 
-      - name: Lint
-        run: uv run make lint
+      - name: Lint (black)
+        run: uv run black --check adeptly tests
 
-      - name: Type check
-        run: uv run make typecheck
+      - name: Type check (mypy)
+        run: uv run mypy adeptly tests
 
-      - name: Test
-        run: uv run make test
+      - name: Test (pytest)
+        run: uv run pytest -q

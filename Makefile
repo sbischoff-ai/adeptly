@@ -4,7 +4,7 @@ lint:
 	black --check adeptly tests
 
 typecheck:
-	mypy adeptly
+	mypy adeptly tests
 
 test:
 	pytest
