@@ -70,3 +70,30 @@ uv run black --check adeptly tests
 uv run mypy adeptly
 uv run pytest
 ```
+
+
+### Multimodal DQN inference (batched)
+```python
+import torch
+from adeptly.observations import MultimodalQNetwork, ObservationBatch
+
+batch_size = 8
+num_actions = 4
+model = MultimodalQNetwork(
+    image_channels=3,
+    telemetry_dim=6,
+    action_size=num_actions,
+    sequence_vocab_size=256,
+)
+
+# Minimal batched environment loop for inference-only usage.
+for _ in range(5):
+    observations = ObservationBatch(
+        image_frames=torch.randint(0, 256, (batch_size, 3, 84, 84), dtype=torch.uint8),
+        scalar_telemetry=torch.randn(batch_size, 6),
+        events_or_text=torch.randint(0, 256, (batch_size, 12), dtype=torch.int64),
+    )
+    q_values = model(observations)
+    actions = torch.argmax(q_values, dim=1)
+    # send `actions` back to your vectorized environment
+```
