@@ -1,6 +1,21 @@
 repos:
--   repo: https://github.com/ambv/black
-    rev: stable
+  - repo: local
     hooks:
-    - id: black
-      language_version: python3.6
+      - id: black-check
+        name: black (check)
+        entry: uv run black --check
+        language: system
+        pass_filenames: false
+        args: ["adeptly", "tests"]
+      - id: lint-compileall
+        name: compileall lint
+        entry: uv run python -m compileall -q
+        language: system
+        pass_filenames: false
+        args: ["adeptly", "tests"]
+      - id: mypy
+        name: mypy
+        entry: uv run mypy
+        language: system
+        pass_filenames: false
+        args: ["adeptly", "tests"]

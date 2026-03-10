@@ -94,10 +94,20 @@ uv sync --frozen --extra dev
 
 ### Run checks
 ```bash
+uv run make format
 uv run make lint
 uv run make typecheck
 uv run make test
+uv run make docs
 ```
+
+### Pre-commit hooks
+```bash
+uv run pre-commit install
+uv run pre-commit run --all-files
+```
+
+See [`CONTRIBUTING.md`](CONTRIBUTING.md) for branch naming, commit conventions, test expectations, and PR checklist details.
 
 GitHub Actions CI runs these direct commands on Python 3.12 and 3.13: black, mypy (on `adeptly` and `tests`), and `pytest -q`.
 
